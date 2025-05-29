@@ -1,7 +1,6 @@
 "use client";
 
 import { createNewChat } from "@/actions/chat";
-import { createClient } from "@/utils/supabase/client";
 import { ArrowUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
@@ -15,7 +14,7 @@ export default function NewChat() {
 
   useEffect(() => {
     if (state.success && state.data) {
-      router.push(`/chat/${state.data[0].id}`);
+      router.push(`/chat/${state.data.id}`);
     }
   }, [state]);
 

@@ -1,7 +1,7 @@
-import { RecentChat } from "@/types/chat";
+import { ChatSessionType } from "@/types/newChat";
 
-export const groupChatsByTime = (chats: RecentChat[]) => {
-  const groups: Record<string, RecentChat[]> = {
+export const groupChatsByTime = (chats: ChatSessionType[]) => {
+  const groups: Record<string, ChatSessionType[]> = {
     Today: [],
     Yesterday: [],
     Earlier: [],
@@ -13,14 +13,14 @@ export const groupChatsByTime = (chats: RecentChat[]) => {
   yesterdayStart.setDate(todayStart.getDate() - 1);
 
   chats.forEach((chat) => {
-    const chatDate = new Date(chat.time);
+    const chatDate = new Date(chat.created_at);
 
     if (chatDate >= todayStart) {
-      groups.Today.push(chat);
+      groups.Today.unshift(chat);
     } else if (chatDate >= yesterdayStart) {
-      groups.Yesterday.push(chat);
+      groups.Yesterday.unshift(chat);
     } else {
-      groups.Earlier.push(chat);
+      groups.Earlier.unshift(chat);
     }
   });
 

@@ -1,7 +1,12 @@
 export type CreateNewChatResponse = {
   success: boolean;
   error: string | null;
-  data?: ChatSessionType[];
+  data?: ChatSessionType;
+};
+
+export type NewChatAIResponse = {
+  title: string;
+  response: string;
 };
 
 export type ChatSessionType = {

@@ -1,17 +1,15 @@
 import { LogOut, SquarePen } from "lucide-react";
 import AppIcon from "../ui/AppIcon";
-import { RecentChat } from "@/types/chat";
 import { groupChatsByTime } from "@/utils/helper";
+import { createClient } from "@/utils/supabase/server";
+import { ChatSessionType } from "@/types/newChat";
+import Link from "next/link";
 
-const recentChats: RecentChat[] = [
-  { id: 1, title: "Sports Analytics Discussion", time: "2025-05-27T08:00:00Z" },
-  { id: 2, title: "Team Performance Review", time: "2025-05-26T13:00:00Z" },
-  { id: 3, title: "Player Statistics Query", time: "2025-05-25T10:30:00Z" },
-  { id: 4, title: "Match Predictions", time: "2025-05-24T09:00:00Z" },
-];
-
-export default function Sidebar() {
-  const groupedChats = groupChatsByTime(recentChats);
+export default async function Sidebar() {
+  const supabase = await createClient();
+  const result = await supabase.from("chat_sessions").select("*");
+  const recentChats = result.data as ChatSessionType[] | null;
+  const groupedChats = groupChatsByTime(recentChats || []);
 
   return (
     <aside className="h-screen w-[20%] text-secondary fixed left-0 p-5 flex flex-col items-start justify-between">
@@ -22,13 +20,16 @@ export default function Sidebar() {
         </h1>
 
         <div className="my-5 w-full">
-          <button className="w-full hover:bg-gray-500/30 rounded-md py-2 flex items-center space-x-2 px-4 text-sm duration-150 transition-colors ease-in-out group cursor-pointer">
+          <Link
+            href={"/chat"}
+            className="w-full hover:bg-gray-500/30 rounded-md py-2 flex items-center space-x-2 px-4 text-sm duration-150 transition-colors ease-in-out group cursor-pointer"
+          >
             <SquarePen
               className="group-hover:text-brand-primary duration-150 transition-colors ease-in-out"
               size={17}
             />
             <span>New Chat</span>
-          </button>
+          </Link>
         </div>
 
         <div className="space-y-4">
@@ -39,12 +40,13 @@ export default function Sidebar() {
                   <p className="text-xs text-gray-400 px-4 mb-1">{group}</p>
                   <div className="space-y-1">
                     {chats.map((chat) => (
-                      <button
+                      <Link
                         key={chat.id}
+                        href={`/chat/${chat.id}`}
                         className="w-full hover:bg-gray-500/30 rounded-md py-2 flex items-center space-x-2 px-4 text-sm duration-150 transition-colors ease-in-out group cursor-pointer"
                       >
                         <span>{chat.title}</span>
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 </div>

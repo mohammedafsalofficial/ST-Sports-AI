@@ -1,11 +1,5 @@
-import Chat from "@/components/features/Chat";
-import Sidebar from "@/components/layout/Sidebar";
+import NewChat from "@/components/features/NewChat";
 
-export default function ChatPage() {
-  return (
-    <main className="flex items-center justify-center h-screen">
-      <Sidebar />
-      <Chat />
-    </main>
-  );
+export default function NewChatPage() {
+  return <NewChat />;
 }
