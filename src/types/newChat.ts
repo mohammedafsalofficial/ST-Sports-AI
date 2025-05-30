@@ -1,3 +1,5 @@
+import { ChatSessionType } from "./chat";
+
 export type CreateNewChatResponse = {
   success: boolean;
   error: string | null;
@@ -7,11 +9,4 @@ export type CreateNewChatResponse = {
 export type NewChatAIResponse = {
   title: string;
   response: string;
-};
-
-export type ChatSessionType = {
-  id: string;
-  user_id: string;
-  title: string;
-  created_at: string;
 };

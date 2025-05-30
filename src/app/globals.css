@@ -3,6 +3,14 @@
 @theme {
   --color-brand-primary: #ef6a36;
   --color-primary: #252422;
-  --color-secondary: #f7f7f7;
+  --color-secondary: #f3f4f6;
   --color-background: #ffffff;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
