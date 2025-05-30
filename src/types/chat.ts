@@ -1,3 +1,20 @@
+export type CreateNewChatResponse = {
+  success: boolean;
+  error: string | null;
+  data?: ChatSessionType;
+};
+
+export type NewChatLLMResponse = {
+  title: string;
+  response: string;
+};
+
+export type CreateChatResponse = {
+  chatSessionId: string;
+  success: boolean;
+  error: string | null;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";

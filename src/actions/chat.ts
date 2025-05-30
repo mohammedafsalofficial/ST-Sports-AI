@@ -1,9 +1,9 @@
 "use server";
 
-import { CreateNewChatResponse, NewChatAIResponse } from "@/types/newChat";
+import { CreateChatResponse, CreateNewChatResponse, NewChatLLMResponse } from "@/types/chat";
 import { generateChatResponse } from "@/utils/ai/chat";
 import { cleanJsonAIResponse } from "@/utils/ai/helper";
-import { createChatSession } from "@/utils/supabase/server";
+import { createChatSession, uploadPrompt } from "@/utils/supabase/chatSession";
 import { revalidatePath } from "next/cache";
 
 export const createNewChat = async (
@@ -31,7 +31,7 @@ export const createNewChat = async (
 
   try {
     const cleanedText = cleanJsonAIResponse(response);
-    const { title, response: aiResponse } = JSON.parse(cleanedText) as NewChatAIResponse;
+    const { title, response: aiResponse } = JSON.parse(cleanedText) as NewChatLLMResponse;
 
     const data = await createChatSession("b7717ab2-deee-4ae8-85f7-702e1047dae9", title, userPrompt, aiResponse);
 
@@ -44,5 +44,35 @@ export const createNewChat = async (
     }
 
     return { success: false, error: "Error creating a new chat session" };
+  }
+};
+
+export const generateLLMResponse = async (
+  previousState: CreateChatResponse,
+  formData: FormData
+): Promise<CreateChatResponse> => {
+  const chatSessionId = previousState.chatSessionId as string;
+  const userPrompt = formData.get("new-prompt") as string;
+
+  console.log(chatSessionId);
+
+  if (!userPrompt.trim()) {
+    return { chatSessionId, success: false, error: "Prompt is required and cannot be empty" };
+  }
+
+  const response = await generateChatResponse(userPrompt);
+
+  try {
+    await uploadPrompt(chatSessionId, userPrompt, response);
+
+    revalidatePath(`/chat/${chatSessionId}`);
+
+    return { chatSessionId, success: true, error: null };
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error(err.message);
+    }
+
+    return { chatSessionId, success: false, error: "Error generating llm response" };
   }
 };
