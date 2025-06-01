@@ -56,13 +56,11 @@ export const generateLLMResponse = async (
   const chatSessionId = previousState.chatSessionId as string;
   const userPrompt = formData.get("new-prompt") as string;
 
-  console.log(chatSessionId);
-
   if (!userPrompt.trim()) {
     return { chatSessionId, success: false, error: "Prompt is required and cannot be empty" };
   }
 
-  const response = await generateChatResponse(userPrompt);
+  const response = await generateChatResponse(userPrompt, chatSessionId);
 
   try {
     await uploadPrompt(chatSessionId, userPrompt, response);
