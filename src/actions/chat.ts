@@ -4,7 +4,9 @@ import { CreateChatResponse, CreateNewChatResponse, NewChatLLMResponse } from "@
 import { generateChatResponse } from "@/utils/ai/chat";
 import { cleanJsonAIResponse } from "@/utils/ai/helper";
 import { createChatSession, uploadPrompt } from "@/utils/supabase/chatSession";
+import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export const createNewChat = async (
   previousState: CreateNewChatResponse,
@@ -75,4 +77,15 @@ export const generateLLMResponse = async (
 
     return { chatSessionId, success: false, error: "Error generating llm response" };
   }
+};
+
+export const deleteChat = async (chatSessionId: string) => {
+  const supabase = await createClient();
+  const { error } = await supabase.from("chat_sessions").delete().eq("id", chatSessionId);
+
+  if (error) {
+    console.error(error.message);
+  }
+
+  redirect("/chat");
 };

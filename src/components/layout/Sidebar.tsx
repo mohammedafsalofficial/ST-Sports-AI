@@ -2,8 +2,9 @@ import { LogOut, SquarePen } from "lucide-react";
 import AppIcon from "../ui/AppIcon";
 import { groupChatsByTime } from "@/utils/helper";
 import { createClient } from "@/utils/supabase/server";
-import { ChatSessionType } from "@/types/newChat";
 import Link from "next/link";
+import { ChatSessionType } from "@/types/chat";
+import SidebarAction from "./SidebarAction";
 
 export default async function Sidebar() {
   const supabase = await createClient();
@@ -40,13 +41,7 @@ export default async function Sidebar() {
                   <p className="text-xs text-gray-400 px-4 mb-1">{group}</p>
                   <div className="space-y-1">
                     {chats.map((chat) => (
-                      <Link
-                        key={chat.id}
-                        href={`/chat/${chat.id}`}
-                        className="w-full hover:bg-gray-500/30 rounded-md py-2 flex items-center space-x-2 px-4 text-sm duration-150 transition-colors ease-in-out group cursor-pointer"
-                      >
-                        <span>{chat.title}</span>
-                      </Link>
+                      <SidebarAction key={chat.id} chat={chat} />
                     ))}
                   </div>
                 </div>
