@@ -6,12 +6,21 @@ import Link from "next/link";
 import { ChatSessionType } from "@/types/chat";
 import SidebarAction from "./SidebarAction";
 import SignOut from "../features/auth/SignOut";
+import { getAuthenticatedUser } from "@/utils/auth/helper";
 
 export default async function Sidebar() {
+  const { id: userId } = await getAuthenticatedUser();
   const supabase = await createClient();
-  const result = await supabase.from("chat_sessions").select("*");
-  const recentChats = result.data as ChatSessionType[] | null;
-  const groupedChats = groupChatsByTime(recentChats || []);
+  const { data: recentChats, error: chatError } = await supabase
+    .from("chat_sessions")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (chatError) {
+    console.error(`Error fetching chat sessions: ${chatError.message}`);
+  }
+
+  const groupedChats = groupChatsByTime((recentChats as ChatSessionType[]) || []);
 
   return (
     <aside className="h-screen w-[20%] text-secondary fixed left-0 p-5 flex flex-col items-start justify-between">

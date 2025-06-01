@@ -1,4 +1,4 @@
-import { ChatSessionType } from "@/types/newChat";
+import { ChatSessionType } from "@/types/chat";
 
 export const groupChatsByTime = (chats: ChatSessionType[]) => {
   const groups: Record<string, ChatSessionType[]> = {
