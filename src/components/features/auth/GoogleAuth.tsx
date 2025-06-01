@@ -2,10 +2,14 @@
 
 import { googleAuth } from "@/actions/auth";
 import GoogleSVG from "@/components/ui/GoogleSVG";
+import { useSearchParams } from "next/navigation";
 
 export default function GoogleAuth() {
+  const searchParams = useSearchParams();
+  const redirectPath = searchParams.get("redirect") || "/chat";
+
   const handleClick = async () => {
-    await googleAuth();
+    await googleAuth(redirectPath);
   };
 
   return (

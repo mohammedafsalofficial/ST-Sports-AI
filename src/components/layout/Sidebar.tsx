@@ -1,10 +1,11 @@
-import { LogOut, SquarePen } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import AppIcon from "../ui/AppIcon";
 import { groupChatsByTime } from "@/utils/helper";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
 import { ChatSessionType } from "@/types/chat";
 import SidebarAction from "./SidebarAction";
+import SignOut from "../features/auth/SignOut";
 
 export default async function Sidebar() {
   const supabase = await createClient();
@@ -50,10 +51,7 @@ export default async function Sidebar() {
         </div>
       </div>
 
-      <button className="flex text-sm items-center justify-start space-x-2 bg-gray-500/30 hover:bg-gray-500/20 w-full py-2 px-4 rounded-md cursor-pointer">
-        <LogOut className="text-brand-primary" size={18} />
-        <span>Log out</span>
-      </button>
+      <SignOut />
     </aside>
   );
 }
