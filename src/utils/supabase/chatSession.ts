@@ -1,8 +1,17 @@
 import { ChatSessionType } from "@/types/chat";
 import { createClient } from "./server";
 
-export const createChatSession = async (userId: string, title: string, userPrompt: string, aiResponse: string) => {
+export const createChatSession = async (title: string, userPrompt: string, aiResponse: string) => {
   const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    console.error("Error creating session");
+    return;
+  }
 
   const initialMessages = [
     {
@@ -21,17 +30,12 @@ export const createChatSession = async (userId: string, title: string, userPromp
 
   const result = await supabase
     .from("chat_sessions")
-    .upsert({ user_id: userId, title, messages: initialMessages })
+    .upsert({ user_id: user?.id, title, messages: initialMessages })
     .select()
     .single();
 
-  if (result.error) {
-    throw new Error(`Database error: ${result.error.message}`);
-  }
-
-  if (!result.data) {
-    throw new Error("No data returned by database");
-  }
+  if (result.error) throw new Error(`Database error: ${result.error.message}`);
+  if (!result.data) throw new Error("No data returned by database");
 
   return result.data as ChatSessionType;
 };

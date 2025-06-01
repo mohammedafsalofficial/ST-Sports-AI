@@ -35,7 +35,7 @@ export const createNewChat = async (
     const cleanedText = cleanJsonAIResponse(response);
     const { title, response: aiResponse } = JSON.parse(cleanedText) as NewChatLLMResponse;
 
-    const data = await createChatSession("b7717ab2-deee-4ae8-85f7-702e1047dae9", title, userPrompt, aiResponse);
+    const data = await createChatSession(title, userPrompt, aiResponse);
 
     revalidatePath("/chat");
 
