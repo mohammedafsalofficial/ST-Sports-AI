@@ -12,7 +12,7 @@ interface Message {
   timestamp: string;
 }
 
-export const generateChatResponse = async (prompt: string, chatSessionId: string) => {
+export const generateChatResponse = async (prompt: string, chatSessionId?: string) => {
   const supabase = await createClient();
   const { data } = await supabase.from("chat_sessions").select("messages").eq("id", chatSessionId).single();
 
