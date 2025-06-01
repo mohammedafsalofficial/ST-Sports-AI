@@ -1,4 +1,4 @@
-import Chat from "@/components/features/Chat";
+import Chat from "@/components/features/chat/Chat";
 import { ChatSessionType } from "@/types/chat";
 import { createClient } from "@/utils/supabase/server";
 import Markdown from "react-markdown";
