@@ -1,9 +1,12 @@
 "use client";
 
+import { googleAuth } from "@/actions/auth";
 import GoogleSVG from "@/components/ui/GoogleSVG";
 
 export default function GoogleAuth() {
-  const handleClick = () => {};
+  const handleClick = async () => {
+    await googleAuth();
+  };
 
   return (
     <button
