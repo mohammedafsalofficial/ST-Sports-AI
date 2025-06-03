@@ -6,24 +6,22 @@ import { redirect } from "next/navigation";
 const REDIRECT_BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const googleAuth = async (redirectPath: string) => {
-  try {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${REDIRECT_BASE_URL}/api/auth/callback?next=${redirectPath}`,
-      },
-    });
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${REDIRECT_BASE_URL}/api/auth/callback?next=${redirectPath}`,
+    },
+  });
 
-    if (error) {
-      console.error("Google Auth Error:", error.message);
-      return;
-    }
+  if (error) {
+    console.error("Google Auth Error:", error.message);
+    return;
+  }
 
-    if (data.url) redirect(data.url);
-  } catch (err) {
-    console.error("Unexpected error during Google auth:", err);
+  if (data.url) {
+    redirect(data.url);
   }
 };
 
