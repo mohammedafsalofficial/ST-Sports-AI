@@ -4,9 +4,7 @@ import { User } from "lucide-react";
 
 export default async function ChatLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const { user_metadata } = await getAuthenticatedUser();
-  const fullName = user_metadata?.full_name;
-
-  // Generate initials: e.g., "Mohammed Afsal" => "MA", "Afsal" => "A"
+  const fullName = user_metadata.full_name as string;
   const initials = fullName
     ? fullName
         .split(" ")

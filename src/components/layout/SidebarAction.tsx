@@ -7,14 +7,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-interface SidebarChatProps {
+interface SidebarActionProps {
   chat: ChatSessionType;
 }
 
-export default function SidebarAction({ chat }: SidebarChatProps) {
+export default function SidebarAction({ chat }: SidebarActionProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const actionRef = useRef<HTMLDivElement>(null);
+  const isActive = pathname === `/chat/${chat.id}`;
 
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -50,14 +51,16 @@ export default function SidebarAction({ chat }: SidebarChatProps) {
     <Link
       href={`/chat/${chat.id}`}
       className={`w-full rounded-md py-2 flex items-center justify-between space-x-2 px-4 text-sm duration-150 transition-colors ease-in-out group cursor-pointer ${
-        isOpen ? "bg-gray-500/30" : "hover:bg-gray-500/30"
+        isActive ? "bg-gray-500/20 border-l-2 border-brand-primary" : isOpen ? "bg-gray-500/30" : "hover:bg-gray-500/30"
       }`}
     >
-      <span>{chat.title}</span>
+      <span className={isActive ? "text-brand-primary font-medium" : ""}>{chat.title}</span>
       <div className="relative" ref={actionRef}>
         <button
           onClick={handleClick}
-          className="space-x-[1px] flex items-center justify-center cursor-pointer p-1 rounded transition-colors"
+          className={`space-x-[1px] flex items-center justify-center cursor-pointer p-1 rounded transition-all duration-200 ${
+            isOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
         >
           <div
             className={`h-1 w-1 rounded-full ${isOpen ? "bg-secondary" : "bg-primary group-hover:bg-secondary"}`}
