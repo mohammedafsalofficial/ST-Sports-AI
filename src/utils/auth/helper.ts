@@ -3,15 +3,12 @@ import { createClient } from "../supabase/server";
 
 export const getAuthenticatedUser = async () => {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    console.error(`Authentication Error: ${authError?.message}`);
+  if (error || !data?.user) {
+    console.error("Authentication Error:", error?.message);
     redirect("/");
   }
 
-  return user;
+  return data.user;
 };
