@@ -11,6 +11,7 @@ export default function Chat({ chatSessionId }: { chatSessionId: string }) {
     error: null,
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const handleInput = () => {
     const textarea = textareaRef.current;
@@ -20,12 +21,25 @@ export default function Chat({ chatSessionId }: { chatSessionId: string }) {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      formRef.current?.requestSubmit();
+    }
+  };
+
   return (
-    <form action={formAction} className="h-full flex-1 flex flex-col items-center justify-center space-y-8">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="h-full flex-1 flex flex-col items-center justify-center space-y-8"
+    >
       <div className="relative w-[80%]">
         <textarea
           ref={textareaRef}
           onInput={handleInput}
+          onKeyDown={handleKeyDown}
+          disabled={pending}
           rows={1}
           style={{ maxHeight: "200px" }}
           className="border border-gray-300 w-full p-3 pr-12 rounded-3xl outline-none text-gray-700 resize-none overflow-y-auto scrollbar-hide"

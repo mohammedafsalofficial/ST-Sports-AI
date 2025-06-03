@@ -12,6 +12,7 @@ export default function NewChat() {
     error: null,
   });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.success && state.data) {
@@ -27,13 +28,26 @@ export default function NewChat() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      formRef.current?.requestSubmit();
+    }
+  };
+
   return (
-    <form action={formAction} className="h-full flex-1 flex flex-col items-center justify-center space-y-8">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="h-full flex-1 flex flex-col items-center justify-center space-y-8"
+    >
       <h1 className="text-2xl">What can I help you with?</h1>
       <div className="relative w-[50%]">
         <textarea
           ref={textareaRef}
           onInput={handleInput}
+          onKeyDown={handleKeyDown}
+          disabled={pending}
           rows={1}
           style={{ maxHeight: "200px" }}
           className="border border-gray-300 w-full p-3 pr-12 rounded-3xl outline-none text-gray-700 resize-none overflow-y-auto scrollbar-hide"
