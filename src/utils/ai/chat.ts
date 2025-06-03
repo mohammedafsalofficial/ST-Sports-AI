@@ -77,6 +77,18 @@ function formatSchemaContext(data: any[]) {
 }
 
 export const generateChatResponse = async (prompt: string, chatSessionId?: string) => {
+  if (!chatSessionId) {
+    const aiResponse = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [
+        { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+        { role: "user", parts: [{ text: prompt }] },
+      ],
+    });
+
+    return aiResponse.text || "";
+  }
+
   const supabase = await createClient();
 
   const { data } = await supabase.from("chat_sessions").select("messages").eq("id", chatSessionId).single();
