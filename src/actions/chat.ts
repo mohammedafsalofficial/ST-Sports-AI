@@ -77,13 +77,19 @@ export const generateLLMResponse = async (
   }
 };
 
-export const deleteChat = async (chatSessionId: string) => {
+export const deleteChat = async (chatSessionId: string, currentPath: string): Promise<void> => {
   const supabase = await createClient();
-  const { error } = await supabase.from("chat_sessions").delete().eq("id", chatSessionId);
 
+  const { error } = await supabase.from("chat_sessions").delete().eq("id", chatSessionId);
   if (error) {
-    console.error(error.message);
+    console.error("Failed to delete chat session:", error.message);
+    return;
   }
 
-  redirect("/chat");
+  revalidatePath("/chat");
+
+  const currentChatId = currentPath.split("/").pop();
+  if (currentChatId === chatSessionId) {
+    redirect("/chat");
+  }
 };

@@ -4,6 +4,7 @@ import { deleteChat } from "@/actions/chat";
 import { ChatSessionType } from "@/types/chat";
 import { Pen, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 interface SidebarChatProps {
@@ -11,6 +12,7 @@ interface SidebarChatProps {
 }
 
 export default function SidebarAction({ chat }: SidebarChatProps) {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const actionRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +39,7 @@ export default function SidebarAction({ chat }: SidebarChatProps) {
 
   const handleDeleteChat = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    await deleteChat(chat.id);
+    await deleteChat(chat.id, pathname);
   };
 
   const handleRenameChat = (e: React.MouseEvent<HTMLButtonElement>) => {
