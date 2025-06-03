@@ -16,7 +16,12 @@ export function ChatView({ chatSession, chatSessionId }: { chatSession: ChatSess
 
   const scrollToBottom = () => {
     const el = containerRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el) {
+      el.scrollTo({
+        top: el.scrollHeight,
+        behavior: "smooth",
+      });
+    }
   };
 
   const handleScroll = () => {
