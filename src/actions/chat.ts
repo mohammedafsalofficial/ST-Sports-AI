@@ -32,7 +32,7 @@ export const createNewChat = async (
   const response = await generateChatResponse(systemPrompt);
 
   try {
-    const cleanedText = cleanJsonAIResponse(response);
+    const cleanedText = cleanJsonAIResponse(response || "");
     const { title, response: aiResponse } = JSON.parse(cleanedText) as NewChatLLMResponse;
 
     const data = await createChatSession(title, userPrompt, aiResponse);
