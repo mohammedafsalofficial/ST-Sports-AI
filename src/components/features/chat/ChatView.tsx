@@ -12,15 +12,12 @@ export function ChatView({ chatSession, chatSessionId }: { chatSession: ChatSess
 
   useEffect(() => {
     scrollToBottom();
-  }, []);
+  }, [chatSession.messages]);
 
   const scrollToBottom = () => {
     const el = containerRef.current;
     if (el) {
-      el.scrollTo({
-        top: el.scrollHeight,
-        behavior: "smooth",
-      });
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }
   };
 
@@ -43,23 +40,7 @@ export function ChatView({ chatSession, chatSessionId }: { chatSession: ChatSess
               }`}
             >
               <div className="prose prose-sm max-w-none">
-                <Markdown
-                  components={{
-                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                    ul: ({ children }) => <ul className="mb-2 pl-4">{children}</ul>,
-                    ol: ({ children }) => <ol className="mb-2 pl-4">{children}</ol>,
-                    li: ({ children }) => <li className="mb-1">{children}</li>,
-                    h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-base font-semibold mb-2">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-sm font-medium mb-1">{children}</h3>,
-                    code: ({ children }) => <code className="bg-gray-100 px-1 py-0.5 rounded text-sm">{children}</code>,
-                    pre: ({ children }) => (
-                      <pre className="bg-gray-100 p-2 rounded overflow-x-auto text-sm">{children}</pre>
-                    ),
-                  }}
-                >
-                  {message.content}
-                </Markdown>
+                <Markdown>{message.content}</Markdown>
               </div>
             </div>
           </div>

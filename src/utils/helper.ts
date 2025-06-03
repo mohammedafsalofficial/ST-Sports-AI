@@ -1,5 +1,4 @@
 import { ChatSessionType } from "@/types/chat";
-import { readFileSync } from "fs";
 
 export const groupChatsByTime = (chats: ChatSessionType[]) => {
   const groups: Record<string, ChatSessionType[]> = {
@@ -27,4 +26,3 @@ export const groupChatsByTime = (chats: ChatSessionType[]) => {
 
   return groups;
 };
-7
