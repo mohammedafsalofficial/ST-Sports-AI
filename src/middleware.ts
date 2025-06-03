@@ -18,6 +18,12 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(redirectUrl);
       }
 
+      const { data } = await supabase.from("user_status").select("status").eq("user_id", user.id);
+      const userStatus = data && data[0].status;
+      if (!userStatus || userStatus === "pending") {
+        throw new Error("User not approved");
+      }
+
       return NextResponse.next();
     } catch (error) {
       console.error("Middleware auth check failed:", error);
