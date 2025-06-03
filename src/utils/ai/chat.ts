@@ -160,6 +160,7 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
   const followUp = await ai.models.generateContent({
     model: GEMINI_MODEL,
     contents: [
+      { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
       ...(schemaText
         ? [
             {
