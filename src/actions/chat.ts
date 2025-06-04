@@ -1,7 +1,7 @@
 "use server";
 
 import { CreateChatResponse, CreateNewChatResponse, NewChatLLMResponse } from "@/types/chat";
-import { generateChatResponse } from "@/utils/ai/chat";
+import { generateChatResponse, generateNewChatResponse } from "@/utils/ai/chat";
 import { cleanJsonAIResponse } from "@/utils/ai/helper";
 import { createChatSession, uploadPrompt } from "@/utils/supabase/chatSession";
 import { createClient } from "@/utils/supabase/server";
@@ -18,7 +18,7 @@ export const createNewChat = async (
     return { success: false, error: "Prompt is required and cannot be empty" };
   }
 
-  const response = await generateChatResponse(userPrompt);
+  const response = await generateNewChatResponse(userPrompt);
 
   try {
     const cleanedText = cleanJsonAIResponse(response);

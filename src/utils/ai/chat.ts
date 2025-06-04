@@ -1,17 +1,17 @@
 import { Content, GoogleGenAI } from "@google/genai";
 import { createClient } from "../supabase/server";
 import { ChatMessage } from "@/types/chat";
-import { getSystemPrompt, parseAIResponse } from "./helper";
-import { sanitizeSQL } from "../sql/helper";
+import { formatSchemaContext, getSystemPrompt, parseAIResponse } from "./helper";
+import { executeSQL, sanitizeSQL } from "../sql/helper";
 
 const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 const GEMINI_MODEL = "gemma-3n-e4b-it";
 const EMBEDDING_MODEL = "embedding-001";
 
-const GENERAL_SYSTEM_PROMPT = getSystemPrompt("systemPrompt.txt");
-const NEW_CHAT_CREATION_SYSTEM_PROMPT = getSystemPrompt("newChatSystemPrompt.txt");
+const GENERAL_SYSTEM_PROMPT = getSystemPrompt("systemPrompt.general.txt");
+const NEW_CHAT_CREATION_SYSTEM_PROMPT = getSystemPrompt("systemPrompt.newChat.txt");
 
-async function getClosestSchemaText(userPrompt: string) {
+const getClosestSchemaText = async (userPrompt: string) => {
   try {
     const embeddingRes = await ai.models.embedContent({
       model: EMBEDDING_MODEL,
@@ -49,83 +49,65 @@ async function getClosestSchemaText(userPrompt: string) {
     console.error("Error in getClosestSchemaText:", error);
     return null;
   }
-}
+};
 
-function formatSchemaContext(data: any[]) {
-  let schemaContext = "=== RELEVANT DATABASE SCHEMAS ===\n\n";
-
-  data.forEach((schema: any, index: number) => {
-    schemaContext += `${index + 1}. Table: ${schema.table_name}\n`;
-    if (schema.description) schemaContext += `   Description: ${schema.description}\n`;
-    schemaContext += `   Schema: ${schema.schema_text}\n`;
-    schemaContext += `   Similarity: ${(schema.similarity * 100).toFixed(1)}%\n\n`;
-  });
-
-  schemaContext += "=== END SCHEMAS ===\n";
-  return schemaContext;
-}
-
-export const generateChatResponse = async (prompt: string, chatSessionId?: string) => {
-  if (!chatSessionId) {
-    const newChatIndicator = `User's prompt: ${prompt}`;
-
-    const aiResponse = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [
-        { role: "user", parts: [{ text: NEW_CHAT_CREATION_SYSTEM_PROMPT }] },
-        { role: "user", parts: [{ text: newChatIndicator }] },
-      ],
-    });
-
-    return aiResponse.text || "";
-  }
-
-  const supabase = await createClient();
-
-  const { data } = await supabase.from("chat_sessions").select("messages").eq("id", chatSessionId).single();
-  const conversationHistory: ChatMessage[] = data?.messages || [];
-  const lastMessages = conversationHistory.slice(-20);
-
-  const formattedHistory: Content[] = lastMessages.map((message) => ({
-    role: message.role === "user" ? "user" : "model",
-    parts: [{ text: message.content }],
-  }));
-
-  const schemaText = await getClosestSchemaText(prompt);
-
-  const contents: Content[] = [
-    { role: "user", parts: [{ text: GENERAL_SYSTEM_PROMPT }] },
-    {
-      role: "model",
-      parts: [
-        {
-          text: "I understand. I'm now a sports arena booking assistant for ST Sports, ready to help with badminton and pickleball court bookings.",
-        },
-      ],
-    },
-    ...(schemaText
-      ? [
-          {
-            role: "user",
-            parts: [{ text: `Here are the relevant database schemas:\n\n${schemaText}` }],
-          },
-          {
-            role: "model",
-            parts: [
-              {
-                text: "Thank you for providing the database schema context. I'll use this information to help with accurate booking queries.",
-              },
-            ],
-          },
-        ]
-      : []),
-    ...formattedHistory,
-    { role: "user", parts: [{ text: prompt }] },
-  ];
+export const generateNewChatResponse = async (prompt: string): Promise<string> => {
+  const newChatIndicator = `User's prompt: ${prompt}`;
 
   const aiResponse = await ai.models.generateContent({
     model: GEMINI_MODEL,
-    contents: contents,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `
+              New chat creation system prompt: ${NEW_CHAT_CREATION_SYSTEM_PROMPT}\n
+              General system prompt: ${GENERAL_SYSTEM_PROMPT}\n
+              user prompt: ${newChatIndicator}
+            `,
+          },
+        ],
+      },
+    ],
+  });
+
+  return aiResponse.text as string;
+};
+
+export const generateChatResponse = async (userPrompt: string, chatSessionId: string) => {
+  const supabase = await createClient();
+
+  const { data } = await supabase.from("chat_sessions").select("messages").eq("id", chatSessionId).single();
+
+  const conversationHistory: ChatMessage[] = data?.messages?.slice(-20) || [];
+
+  const formattedHistory: Content[] = conversationHistory.map((msg) => ({
+    role: msg.role === "user" ? "user" : "model",
+    parts: [{ text: msg.content }],
+  }));
+
+  const schemaText = await getClosestSchemaText(userPrompt);
+
+  const prompt = `
+    System prompt : ${GENERAL_SYSTEM_PROMPT},\n
+    Context : ${JSON.stringify(formattedHistory, null, 2)},\n 
+    Schema : ${schemaText},\n 
+    Prompt : ${userPrompt}
+  `;
+
+  const aiResponse = await ai.models.generateContent({
+    model: GEMINI_MODEL,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: prompt,
+          },
+        ],
+      },
+    ],
   });
 
   const parsedResponse = parseAIResponse(aiResponse.text || "");
@@ -135,60 +117,31 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
     return parsedResponse.content;
   }
 
-  console.log("SQL Query Response:", parsedResponse);
+  try {
+    const sqlResult = await executeSQL(parsedResponse.content);
 
-  const { data: sqlResult, error: sqlError } = await supabase.rpc("run_any_sql", {
-    sql_query: sanitizeSQL(parsedResponse.content),
-  });
+    console.log("SQL Query:", parsedResponse.content);
+    console.log("SQL Result:", sqlResult);
 
-  if (sqlError) {
-    console.error("SQL Execution Error:", sqlError);
+    const followUp = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `System prompt : ${GENERAL_SYSTEM_PROMPT},\n Context : ${formattedHistory.toString()},\n SQL Result : ${sqlResult}.  Generate a response using the prompt: ${userPrompt} to show it to the user`,
+            },
+          ],
+        },
+      ],
+    });
+
+    const finalResponse = parseAIResponse(followUp.text || "");
+    console.log(finalResponse);
+    return finalResponse?.classification === "RESPONSE" ? finalResponse.content : "Ask in a more clarified way";
+  } catch (err) {
+    console.error("SQL Execution Error:", err);
     return "There was an error executing the SQL query.";
   }
-
-  console.log("SQL Result:", sqlResult);
-
-  const followUp = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [
-      { role: "user", parts: [{ text: GENERAL_SYSTEM_PROMPT }] },
-      ...(schemaText
-        ? [
-            {
-              role: "user",
-              parts: [{ text: `Here are the relevant database schemas:\n\n${schemaText}` }],
-            },
-            {
-              role: "model",
-              parts: [
-                {
-                  text: "Thank you for providing the database schema context. I'll use this information to help with accurate booking queries.",
-                },
-              ],
-            },
-          ]
-        : []),
-      {
-        role: "user",
-        parts: [{ text: `SQL Query: ${parsedResponse.content}\n\nResult:\n${JSON.stringify(sqlResult, null, 2)}` }],
-      },
-      {
-        role: "user",
-        parts: [
-          {
-            text: "Generate a helpful booking assistant response from this result. Use the standard JSON format with classification 'RESPONSE'.",
-          },
-        ],
-      },
-    ],
-  });
-
-  const finalResponse = parseAIResponse(followUp.text || "");
-  if (!finalResponse) return "Couldn't parse AI response.";
-
-  if (finalResponse.classification === "RESPONSE") {
-    return finalResponse.content;
-  }
-
-  return "Ask in a more clarified way";
 };
