@@ -10,9 +10,9 @@ const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 const GEMINI_MODEL = "gemma-3n-e4b-it";
 const EMBEDDING_MODEL = "embedding-001";
 
-const getSystemPrompt = () => {
+const getSystemPrompt = (fileName: string) => {
   try {
-    const systemPromptPath = join(process.cwd(), "systemPrompt.txt");
+    const systemPromptPath = join(process.cwd(), fileName);
     return readFileSync(systemPromptPath, "utf8");
   } catch (error) {
     console.error("Error loading system prompt:", error);
@@ -20,7 +20,8 @@ const getSystemPrompt = () => {
   }
 };
 
-const SYSTEM_PROMPT = getSystemPrompt();
+const GENERAL_SYSTEM_PROMPT = getSystemPrompt("systemPrompt.txt");
+const NEW_CHAT_CREATION_SYSTEM_PROMPT = getSystemPrompt("newChatSystemPrompt.txt");
 
 async function getClosestSchemaText(userPrompt: string) {
   try {
@@ -78,11 +79,13 @@ function formatSchemaContext(data: any[]) {
 
 export const generateChatResponse = async (prompt: string, chatSessionId?: string) => {
   if (!chatSessionId) {
+    const newChatIndicator = `User's prompt: ${prompt}`;
+
     const aiResponse = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [
-        { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
-        { role: "user", parts: [{ text: prompt }] },
+        { role: "user", parts: [{ text: NEW_CHAT_CREATION_SYSTEM_PROMPT }] },
+        { role: "user", parts: [{ text: newChatIndicator }] },
       ],
     });
 
@@ -108,7 +111,7 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
       role: "model",
       parts: [
         {
-          text: "I understand. I'm now a sports arena booking assistant...",
+          text: "I understand. I'm now a sports arena booking assistant for ST Sports, ready to help with badminton and pickleball court bookings.",
         },
       ],
     },
@@ -122,7 +125,7 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
             role: "model",
             parts: [
               {
-                text: "Thank you for providing the database schema context...",
+                text: "Thank you for providing the database schema context. I'll use this information to help with accurate booking queries.",
               },
             ],
           },
@@ -144,7 +147,7 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
     return parsedResponse.content;
   }
 
-  console.log(parsedResponse);
+  console.log("SQL Query Response:", parsedResponse);
 
   const { data: sqlResult, error: sqlError } = await supabase.rpc("run_any_sql", {
     sql_query: sanitizeSQL(parsedResponse.content),
@@ -171,7 +174,7 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
               role: "model",
               parts: [
                 {
-                  text: "Thank you for providing the database schema context...",
+                  text: "Thank you for providing the database schema context. I'll use this information to help with accurate booking queries.",
                 },
               ],
             },
@@ -183,11 +186,11 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
       },
       {
         role: "user",
-        parts: [{ text: SYSTEM_PROMPT }],
-      },
-      {
-        role: "user",
-        parts: [{ text: "Generate a helpful booking assistant response from this result." }],
+        parts: [
+          {
+            text: "Generate a helpful booking assistant response from this result. Use the standard JSON format with classification 'RESPONSE'.",
+          },
+        ],
       },
     ],
   });

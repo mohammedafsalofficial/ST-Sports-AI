@@ -18,21 +18,10 @@ export const createNewChat = async (
     return { success: false, error: "Prompt is required and cannot be empty" };
   }
 
-  const systemPrompt = `You need to provide two things in JSON format:
-        1. Generate a 3-4 word title for this prompt (for sidebar display)
-        2. Provide a complete response to the prompt
-
-        Return in this exact JSON format:
-        {
-          "title": "your generated title here",
-          "response": "your complete response here"
-        }
-
-        The user's prompt is: ${userPrompt}`;
-  const response = await generateChatResponse(systemPrompt);
+  const response = await generateChatResponse(userPrompt);
 
   try {
-    const cleanedText = cleanJsonAIResponse(response || "");
+    const cleanedText = cleanJsonAIResponse(response);
     const { title, response: aiResponse } = JSON.parse(cleanedText) as NewChatLLMResponse;
 
     const data = await createChatSession(title, userPrompt, aiResponse);
