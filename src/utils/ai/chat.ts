@@ -1,24 +1,12 @@
 import { Content, GoogleGenAI } from "@google/genai";
 import { createClient } from "../supabase/server";
 import { ChatMessage } from "@/types/chat";
-import { readFileSync } from "fs";
-import { join } from "path";
-import { parseAIResponse } from "./helper";
+import { getSystemPrompt, parseAIResponse } from "./helper";
 import { sanitizeSQL } from "../sql/helper";
 
 const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
 const GEMINI_MODEL = "gemma-3n-e4b-it";
 const EMBEDDING_MODEL = "embedding-001";
-
-const getSystemPrompt = (fileName: string) => {
-  try {
-    const systemPromptPath = join(process.cwd(), fileName);
-    return readFileSync(systemPromptPath, "utf8");
-  } catch (error) {
-    console.error("Error loading system prompt:", error);
-    return "You are a helpful sports arena booking assistant for badminton and pickleball courts.";
-  }
-};
 
 const GENERAL_SYSTEM_PROMPT = getSystemPrompt("systemPrompt.txt");
 const NEW_CHAT_CREATION_SYSTEM_PROMPT = getSystemPrompt("newChatSystemPrompt.txt");
@@ -106,7 +94,7 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
   const schemaText = await getClosestSchemaText(prompt);
 
   const contents: Content[] = [
-    { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+    { role: "user", parts: [{ text: GENERAL_SYSTEM_PROMPT }] },
     {
       role: "model",
       parts: [
@@ -163,7 +151,7 @@ export const generateChatResponse = async (prompt: string, chatSessionId?: strin
   const followUp = await ai.models.generateContent({
     model: GEMINI_MODEL,
     contents: [
-      { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+      { role: "user", parts: [{ text: GENERAL_SYSTEM_PROMPT }] },
       ...(schemaText
         ? [
             {

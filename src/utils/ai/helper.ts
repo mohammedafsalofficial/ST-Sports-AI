@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+
 export const cleanJsonAIResponse = (text: string): string => {
   return text
     .replace(/```json\s*/g, "")
@@ -32,5 +35,15 @@ export const parseAIResponse = (responseText: string): { classification: string;
   } catch (error) {
     console.error("Failed to parse AI response JSON:", error, "\nRaw text was:", responseText);
     return null;
+  }
+};
+
+export const getSystemPrompt = (fileName: string) => {
+  try {
+    const systemPromptPath = join(process.cwd(), fileName);
+    return readFileSync(systemPromptPath, "utf8");
+  } catch (error) {
+    console.error("Error loading system prompt:", error);
+    return "You are a helpful sports arena booking assistant for badminton and pickleball courts.";
   }
 };
