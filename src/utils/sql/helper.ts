@@ -6,8 +6,8 @@ export const sanitizeSQL = (sql: string): string => {
 
 export const executeSQL = async (query: string) => {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("run_any_sql", {
-    sql_query: sanitizeSQL(query),
+  const { data, error } = await supabase.rpc("execute_sql_statement", {
+    sql_text: sanitizeSQL(query),
   });
 
   if (error) throw error;
