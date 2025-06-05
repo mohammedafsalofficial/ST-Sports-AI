@@ -209,6 +209,7 @@ export const generateChatResponse = async (userPrompt: string, chatSessionId: st
             role: "system",
             content: `${RESPONSE_SYSTEM_PROMPT}
             CRITICAL: You must respond in this exact JSON format:
+            If SQL Result exectues perfectly fine generate a better response based on user prompt
             {
               "classification": "RESPONSE",
               "response": "Your message to the user here"
