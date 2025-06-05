@@ -1,0 +1,105 @@
+{
+  "tablename": "bookings",
+  "schema": '''
+create table public.bookings (
+  id uuid not null default extensions.uuid_generate_v4 (),
+  member_id uuid not null,
+  court_id integer not null,
+  membership_id uuid null,
+  booking_number character varying(30) not null,
+  booking_reference character varying(50) null,
+  booking_date date not null,
+  start_time time without time zone not null,
+  end_time time without time zone not null,
+  duration_minutes integer GENERATED ALWAYS as (
+    (
+      EXTRACT(
+        epoch
+        from
+          (end_time - start_time)
+      ) / (60)::numeric
+    )
+  ) STORED null,
+  total_players integer not null default 1,
+  player_names text[] null,
+  guest_players integer null default 0,
+  base_rate numeric(10, 2) not null,
+  peak_hour_surcharge numeric(10, 2) null default 0,
+  membership_discount numeric(10, 2) null default 0,
+  additional_charges numeric(10, 2) null default 0,
+  tax_amount numeric(10, 2) null default 0,
+  total_amount numeric(10, 2) not null,
+  payment_status public.payment_status null default 'pending'::payment_status,
+  payment_method public.payment_method null,
+  advance_payment numeric(10, 2) null default 0,
+  status public.booking_status null default 'pending'::booking_status,
+  check_in_time timestamp with time zone null,
+  check_out_time timestamp with time zone null,
+  special_requests text null,
+  equipment_needed text[] null,
+  coaching_required boolean null default false,
+  cancellation_reason text null,
+  cancelled_at timestamp with time zone null,
+  cancelled_by uuid null,
+  refund_amount numeric(10, 2) null default 0,
+  booking_source character varying(50) null default 'website'::character varying,
+  booked_by character varying(100) null,
+  created_at timestamp with time zone null default now(),
+  updated_at timestamp with time zone null default now(),
+  created_by uuid null,
+  updated_by uuid null,
+  constraint bookings_future_date check (
+    (
+      booking_date >= (CURRENT_DATE - '1 day'::interval)
+    )
+  ),
+  constraint bookings_players_positive check ((total_players > 0)),
+  constraint bookings_time_order check ((end_time > start_time)),
+  constraint bookings_total_positive check ((total_amount >= (0)::numeric))
+) TABLESPACE pg_default;
+''',
+  "Column explanation": {
+    "id": "Primary UUID key for each booking, auto-generated using uuid_generate_v4()",
+    "member_id": "References the member making the booking (required UUID foreign key to members table)",
+    "court_id": "References the court being booked (required integer foreign key to courts table)",
+    "membership_id": "Optional reference to a membership if the booking is by a member (nullable UUID foreign key to memberships table)",
+    "booking_number": "Unique identifier for the booking (varchar(30), must be unique)",
+    "booking_reference": "Optional external reference like transaction id (varchar(50))",
+    "booking_date": "Date on which the booking is scheduled (date type, must be current date or future with 1-day grace period)",
+    "start_time": "Start time of the booking (time without time zone)",
+    "end_time": "End time of the booking (time without time zone, must be after start_time)",
+    "duration_minutes": "Auto-calculated field showing total duration in minutes (generated column based on time difference)",
+    "total_players": "Total number of players in the booking (integer, must be greater than 0, defaults to 1)",
+    "player_names": "Array of player names including members and guests (text array)",
+    "guest_players": "Count of guest players who are non-members (integer, defaults to 0)",
+    "base_rate": "Base rate charged for the booking (numeric(10,2), required)",
+    "peak_hour_surcharge": "Additional charge during peak hours (numeric(10,2), defaults to 0)",
+    "membership_discount": "Discount applied for members (numeric(10,2), defaults to 0)",
+    "additional_charges": "Charges for extras like equipment (numeric(10,2), defaults to 0)",
+    "tax_amount": "Calculated tax amount for the booking (numeric(10,2), defaults to 0)",
+    "total_amount": "Final total payable amount for the booking (numeric(10,2), required, must be >= 0)",
+    "payment_status": "Enum tracking the payment status like pending, paid, failed (defaults to 'pending')",
+    "payment_method": "Enum indicating how the payment was made like cash, card, upi (nullable)",
+    "advance_payment": "Amount paid in advance if any (numeric(10,2), defaults to 0)",
+    "status": "Enum indicating the booking status like pending, confirmed, cancelled, completed (defaults to 'pending')",
+    "check_in_time": "Timestamp with timezone when players checked in (nullable)",
+    "check_out_time": "Timestamp with timezone when players checked out (nullable)",
+    "special_requests": "Any special instructions or requests from the user (text, nullable)",
+    "equipment_needed": "Array of required equipment (text array, nullable)",
+    "coaching_required": "Boolean flag for whether coaching is needed (defaults to false)",
+    "cancellation_reason": "Text description of why the booking was cancelled (nullable)",
+    "cancelled_at": "Timestamp with timezone when the booking was cancelled (nullable)",
+    "cancelled_by": "UUID of the person who cancelled the booking (nullable)",
+    "refund_amount": "Amount refunded after cancellation (numeric(10,2), defaults to 0)",
+    "booking_source": "How the booking was made like website, app, phone, walk-in (varchar(50), defaults to 'website')",
+    "booked_by": "Name or ID of the staff member if booked by staff (varchar(100), nullable)",
+    "created_at": "Timestamp with timezone when the booking was created (defaults to now())",
+    "updated_at": "Timestamp with timezone when the booking was last updated (defaults to now())",
+    "created_by": "UUID of the user who created the booking entry (nullable)",
+    "updated_by": "UUID of the user who last updated the booking entry (nullable)"
+  },
+  "table explanation": {
+    "entityType": "bookings",
+    "description": "This table tracks all booking records made by members or non-members for specific courts. It includes detailed information about the players, timings, charges, discounts, payment details, and workflow status. The table has several constraints: bookings must be for current date or future (with 1-day grace), end time must be after start time, total players must be positive, and total amount must be non-negative. It supports audit fields and cancellations while linking to members (required), courts (required), and optional memberships. Duration is automatically calculated as a generated column. The table uses PostgreSQL-specific features like arrays for player names and equipment, and custom enum types for status fields."
+  }
+}
